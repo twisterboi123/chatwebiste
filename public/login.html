@@ -82,7 +82,7 @@
         if (response.ok) {
           console.log('Login successful, cookies:', document.cookie);
           setTimeout(() => {
-            window.location.href = 'chat.html';
+            window.location.href = 'home.html';
           }, 100);
         } else {
           errorMessage.textContent = result.error || 'Login failed';
