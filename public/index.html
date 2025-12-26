@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat Lounge - Connect with People Worldwide</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar-home">
+    <div class="navbar-content">
+      <div class="navbar-brand">💬 Chat Lounge</div>
+      <div class="navbar-actions">
+        <a href="login.html" class="btn secondary">Log In</a>
+        <a href="register.html" class="btn primary">Sign Up</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="hero-text">
+        <span class="hero-badge"> Connect Globally</span>
+        <h1 class="hero-title">Meet New People.<br>Chat Instantly.</h1>
+        <p class="hero-description">Join thousands of people in real-time chat rooms. Create your own space, find random chat partners, or match based on shared interests.</p>
+        <div class="hero-buttons">
+          <a href="register.html" class="btn primary large">Start Chatting Free</a>
+          <a href="login.html" class="btn ghost large">Log In</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat">
+            <div class="stat-number" id="online-count">0</div>
+            <div class="stat-label">Online Now</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number" id="room-count">0</div>
+            <div class="stat-label">Total Rooms</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number" id="active-rooms">0</div>
+            <div class="stat-label">Active Rooms</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="floating-card card-1">
+          <div class="chat-bubble-demo">
+            <div class="bubble-avatar"></div>
+            <div class="bubble-content">
+              <div class="bubble-name">GamerPro</div>
+              <div class="bubble-text">Anyone up for some multiplayer?</div>
+            </div>
+          </div>
+        </div>
+        <div class="floating-card card-2">
+          <div class="chat-bubble-demo">
+            <div class="bubble-avatar"></div>
+            <div class="bubble-content">
+              <div class="bubble-name">ArtLover</div>
+              <div class="bubble-text">Check out my latest drawing!</div>
+            </div>
+          </div>
+        </div>
+        <div class="floating-card card-3">
+          <div class="chat-bubble-demo">
+            <div class="bubble-avatar"></div>
+            <div class="bubble-content">
+              <div class="bubble-name">SportsFan</div>
+              <div class="bubble-text">What a game today! </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features-section" id="rooms">
+    <div class="container">
+      <div class="section-header-center">
+        <h2 class="section-title">Chat Your Way</h2>
+        <p class="section-subtitle">Three different ways to connect with people</p>
+      </div>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon"></div>
+          <h3>Public Rooms</h3>
+          <p>Join topic-based chat rooms with multiple people. Create your own room or join existing conversations.</p>
+          <ul class="feature-list">
+            <li> Create custom rooms</li>
+            <li> Add emojis & tags</li>
+            <li> Moderator controls</li>
+          </ul>
+        </div>
+        
+        <div class="feature-card featured">
+          <div class="feature-badge">Most Popular</div>
+          <div class="feature-icon"></div>
+          <h3>Random Chat</h3>
+          <p>Get matched with random people instantly. Click "next" to find a new chat partner anytime.</p>
+          <ul class="feature-list">
+            <li> Instant matching</li>
+            <li> Skip to next person</li>
+            <li> Anonymous chatting</li>
+          </ul>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon"></div>
+          <h3>Interest Matching</h3>
+          <p>Find people who share your interests. Set your preferences and get matched with like-minded people.</p>
+          <ul class="feature-list">
+            <li> Custom interests</li>
+            <li> Smart matching</li>
+            <li> Better conversations</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-content">
+        <h2 class="cta-title">Ready to Start Chatting?</h2>
+        <p class="cta-text">Join our community and start making connections today. No registration required!</p>
+        <a href="chat.html" class="btn primary large">Enter Chat Now</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <div class="footer-logo"> Chat Lounge</div>
+          <p class="footer-tagline">Connect with people worldwide</p>
+        </div>
+        <div class="footer-links">
+          <a href="chat.html">Chat Rooms</a>
+          <a href="create-room.html">Create Room</a>
+          <a href="#rooms">Features</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 Chat Lounge. Made with </p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // Fetch real stats from server
+    async function updateStats() {
+      try {
+        const response = await fetch('/api/stats');
+        const stats = await response.json();
+        
+        document.getElementById('online-count').textContent = stats.onlineUsers;
+        document.getElementById('room-count').textContent = stats.totalRooms;
+        document.getElementById('active-rooms').textContent = stats.activeRooms;
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+      }
+    }
+    
+    // Update stats immediately and every 5 seconds
+    updateStats();
+    setInterval(updateStats, 5000);
+  </script>
+</body>
+</html>

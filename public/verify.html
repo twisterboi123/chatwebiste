@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verify Email</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="page__header">
+      <a class="link" href="index.html">← Home</a>
+      <h1>Verify your Gmail</h1>
+      <p class="muted">Enter the 6-digit code we sent to your Gmail.</p>
+    </header>
+    <form class="auth" method="POST" action="/verify">
+      <label>
+        <span>Username</span>
+        <input name="username" id="username" required />
+      </label>
+      <label>
+        <span>Verification code</span>
+        <input name="code" pattern="\d{6}" maxlength="6" placeholder="123456" required />
+      </label>
+      <button class="btn primary" type="submit">Verify</button>
+    </form>
+    <p class="muted">Didn't get it? Check spam or request a new code by re-registering.</p>
+  </main>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const user = params.get('username');
+    const code = params.get('code');
+    if (user) {
+      document.getElementById('username').value = user;
+    }
+    if (code) {
+      const codeInput = document.querySelector('input[name="code"]');
+      codeInput.value = code;
+    }
+  </script>
+</body>
+</html>

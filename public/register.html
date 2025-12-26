@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register - Chat Lounge</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-container">
+      <div class="auth-header">
+        <h1>Create Account</h1>
+        <p class="muted">Join Chat Lounge and start chatting</p>
+      </div>
+      
+      <form id="register-form" class="auth-form">
+        <div class="field">
+          <label for="username">Username</label>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            required 
+            autocomplete="username"
+            placeholder="Choose a username (3-20 characters)"
+            minlength="3"
+            maxlength="20"
+          />
+        </div>
+        
+        <div class="field">
+          <label for="password">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            required 
+            autocomplete="new-password"
+            placeholder="Choose a password (min. 6 characters)"
+            minlength="6"
+          />
+        </div>
+        
+        <div id="error-message" class="error-message" style="display: none;"></div>
+        
+        <button type="submit" class="btn primary full">Create Account</button>
+      </form>
+      
+      <div class="auth-footer">
+        <p class="muted">Already have an account? <a href="login.html" class="link">Log in</a></p>
+        <p class="muted"><a href="index.html" class="link">← Back to Home</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('register-form');
+    const errorMessage = document.getElementById('error-message');
+    
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMessage.style.display = 'none';
+      
+      const formData = new FormData(form);
+      const data = {
+        username: formData.get('username'),
+        password: formData.get('password')
+      };
+      
+      try {
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          // Debug: Check if cookie was set
+          console.log('Registration successful, cookies:', document.cookie);
+          // Small delay to ensure cookie is set
+          setTimeout(() => {
+            window.location.href = 'chat.html';
+          }, 100);
+        } else {
+          errorMessage.textContent = result.error || 'Registration failed';
+          errorMessage.style.display = 'block';
+        }
+      } catch (error) {
+        errorMessage.textContent = 'Connection error. Please try again.';
+        errorMessage.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

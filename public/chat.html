@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat Systems</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="section">
+        <div class="field">
+          <label>Your Username</label>
+          <input id="username" placeholder="Choose a name" />
+          <button id="save-username" class="btn primary full">Save Username</button>
+        </div>
+        <div class="status-badge" id="status">Idle</div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <h3>Chat Rooms</h3>
+          <a href="create-room.html" class="btn primary small">+ Create</a>
+        </div>
+        <ul id="room-list" class="room-list"></ul>
+      </div>
+
+      <div class="section">
+        <h3>Random Chat</h3>
+        <div class="stack">
+          <button id="start-random" class="btn success full" type="button">🎲 Start Random Chat</button>
+          <div class="random-controls" id="random-controls" style="display: none;">
+            <button id="next-random" class="btn ghost full" type="button">Next Partner</button>
+            <button id="stop-random" class="btn danger full" type="button">Stop Chat</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Preferences</h3>
+        <div class="stack">
+          <label class="inline">
+            <input type="checkbox" id="interest-toggle" />
+            Match by interests
+          </label>
+          <input id="interest-input" placeholder="Your interests (e.g., gaming, sports)" />
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <!-- Rooms Browse View (shown when idle) -->
+      <div id="rooms-view" class="rooms-view">
+        <div class="main-header">
+          <div>
+            <h2>Chat Rooms</h2>
+            <p class="muted">Join a room to start chatting</p>
+          </div>
+          <a href="create-room.html" class="btn primary">+ Create New Room</a>
+        </div>
+        <div id="room-cards" class="room-grid"></div>
+      </div>
+
+      <!-- Chat View (shown when in room/random chat) -->
+      <div id="chat-view" style="display: none;">
+        <header class="chat-header">
+          <div class="titles">
+            <a class="link" href="index.html">← Home</a>
+            <div id="context-label">Room Chat</div>
+            <div id="context-sub" class="muted"></div>
+          </div>
+        </header>
+
+        <section class="chat-panel">
+          <ul id="messages" class="messages" aria-live="polite"></ul>
+          <form id="chat-form" class="chat-form" autocomplete="off">
+            <input id="msg" name="message" placeholder="Type a message" required />
+            <button class="btn primary" type="submit">Send</button>
+          </form>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="chat.js"></script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Chat Room</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="create-room-page">
+      <div class="page-header">
+        <a class="link" href="chat.html">← Back to Chat</a>
+        <h1>Create New Room</h1>
+        <p class="muted">Set up your own chat room and invite others to join</p>
+      </div>
+
+      <div class="create-room-card">
+        <form id="create-room-form" class="stack">
+          <div class="field">
+            <label for="room-emoji">Room Emoji</label>
+            <div class="emoji-picker">
+              <input 
+                type="text" 
+                id="room-emoji" 
+                name="emoji" 
+                placeholder="Pick an emoji"
+                maxlength="2"
+                value="💬"
+                style="font-size: 32px; text-align: center; padding: 20px;"
+              />
+              <div class="emoji-options">
+                <button type="button" class="emoji-btn" data-emoji="💬">💬</button>
+                <button type="button" class="emoji-btn" data-emoji="🎮">🎮</button>
+                <button type="button" class="emoji-btn" data-emoji="⚽">⚽</button>
+                <button type="button" class="emoji-btn" data-emoji="🎵">🎵</button>
+                <button type="button" class="emoji-btn" data-emoji="🎬">🎬</button>
+                <button type="button" class="emoji-btn" data-emoji="📚">📚</button>
+                <button type="button" class="emoji-btn" data-emoji="💻">💻</button>
+                <button type="button" class="emoji-btn" data-emoji="🎨">🎨</button>
+                <button type="button" class="emoji-btn" data-emoji="🍕">🍕</button>
+                <button type="button" class="emoji-btn" data-emoji="✈️">✈️</button>
+                <button type="button" class="emoji-btn" data-emoji="🎯">🎯</button>
+                <button type="button" class="emoji-btn" data-emoji="🌟">🌟</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="room-name">Room Name *</label>
+            <input 
+              type="text" 
+              id="room-name" 
+              name="name" 
+              placeholder="e.g., Gaming Lounge" 
+              required 
+              maxlength="50"
+            />
+          </div>
+
+          <div class="field">
+            <label for="room-topic">Topic (Optional)</label>
+            <input 
+              type="text" 
+              id="room-topic" 
+              name="topic" 
+              placeholder="e.g., Discuss gaming news and strategies" 
+              maxlength="100"
+            />
+          </div>
+
+          <div class="field">
+            <label for="room-tags">Tags (Optional)</label>
+            <input 
+              type="text" 
+              id="room-tags" 
+              name="tags" 
+              placeholder="e.g., gaming, sports, tech (comma separated)" 
+            />
+            <small class="muted">Add tags to help people find your room</small>
+          </div>
+
+          <div class="field">
+            <label class="inline">
+              <input type="checkbox" name="isPrivate" id="room-private" />
+              Make this room private
+            </label>
+            <small class="muted">Private rooms won't appear in the public room list</small>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn primary full">Create Room</button>
+            <a href="chat.html" class="btn ghost full">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const form = document.getElementById('create-room-form');
+    const emojiInput = document.getElementById('room-emoji');
+    const emojiButtons = document.querySelectorAll('.emoji-btn');
+
+    // Emoji selection
+    emojiButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const emoji = btn.dataset.emoji;
+        emojiInput.value = emoji;
+        emojiButtons.forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+      });
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      
+      socket.emit('room:create', {
+        name: formData.get('name'),
+        emoji: formData.get('emoji'),
+        topic: formData.get('topic'),
+        tags: formData.get('tags'),
+        isPrivate: formData.get('isPrivate') === 'on',
+      });
+
+      // Redirect to chat page after creating
+      setTimeout(() => {
+        window.location.href = 'chat.html';
+      }, 500);
+    });
+
+    socket.on('connect_error', () => {
+      alert('Connection error. Please try again.');
+    });
+  </script>
+</body>
+</html>
