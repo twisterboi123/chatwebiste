@@ -1,59 +1,53 @@
-const { Pool } = require('pg');
+const Database = require('better-sqlite3');
+const path = require('path');
 
-const connectionString = process.env.DATABASE_URL;
+const dbPath = path.join(__dirname, 'users.db');
+const db = new Database(dbPath);
 
-if (!connectionString) {
-  console.warn('DATABASE_URL is not set. Please configure Render Postgres.');
-}
-
-const pool = new Pool({
-  connectionString,
-  ssl: connectionString ? { rejectUnauthorized: false } : false,
-});
+// Enable foreign keys
+db.pragma('journal_mode = WAL');
 
 async function load() {
-  if (!connectionString) return;
-  await pool.query(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       username TEXT PRIMARY KEY,
       password TEXT NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT NOW()
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
-  const { rows } = await pool.query('SELECT COUNT(*) FROM users');
-  console.log(`Database loaded: ${rows[0].count} users`);
+  const count = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
+  console.log(`Database loaded: ${count} users`);
 }
 
 async function save() {
-  // no-op for postgres; kept for API compatibility
+  // SQLite auto-saves; kept for API compatibility
 }
 
 async function getUser(username) {
-  if (!connectionString) return null;
-  const { rows } = await pool.query('SELECT username, password FROM users WHERE username = $1', [username.toLowerCase()]);
-  return rows[0] || null;
+  const row = db.prepare('SELECT username, password FROM users WHERE username = ?').get(username.toLowerCase());
+  return row || null;
 }
 
 async function createUser(username, password) {
-  if (!connectionString) throw new Error('DATABASE_URL not configured');
   const userId = username.toLowerCase();
-  await pool.query(
-    'INSERT INTO users (username, password) VALUES ($1, $2) ON CONFLICT (username) DO NOTHING',
-    [userId, password]
-  );
-  return { username, password };
+  try {
+    db.prepare('INSERT INTO users (username, password) VALUES (?, ?)').run(userId, password);
+    return { username: userId, password };
+  } catch (err) {
+    if (err.message.includes('UNIQUE constraint failed')) {
+      throw new Error('Username already exists');
+    }
+    throw err;
+  }
 }
 
 async function userExists(username) {
-  if (!connectionString) return false;
-  const { rows } = await pool.query('SELECT 1 FROM users WHERE username = $1', [username.toLowerCase()]);
-  return rows.length > 0;
+  const row = db.prepare('SELECT 1 FROM users WHERE username = ?').get(username.toLowerCase());
+  return Boolean(row);
 }
 
 async function getAllUsers() {
-  if (!connectionString) return [];
-  const { rows } = await pool.query('SELECT username, created_at FROM users');
-  return rows;
+  return db.prepare('SELECT username, created_at FROM users').all();
 }
 
 module.exports = {
