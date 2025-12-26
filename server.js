@@ -26,7 +26,17 @@ function generateSessionId() {
 
 function requireAuth(req, res, next) {
   const sessionId = req.cookies.sessionId;
-  const session = sessions.get(sessionId);
+  let session = sessions.get(sessionId);
+
+  // Rebuild session from DB if memory was cleared (e.g., Render restart)
+  if (!session && sessionId) {
+    const user = db.getUser(sessionId);
+    if (user) {
+      session = { username: user.username, userId: sessionId };
+      sessions.set(sessionId, session);
+    }
+  }
+
   if (!session) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -91,10 +101,11 @@ app.post("/api/register", (req, res) => {
   
   db.createUser(username, password);
   
-  const sessionId = generateSessionId();
-  sessions.set(sessionId, { username, userId: username.toLowerCase() });
+  // Use stable sessionId = username to survive restarts (db-backed)
+  const sessionId = username.toLowerCase();
+  sessions.set(sessionId, { username, userId: sessionId });
   
-  res.cookie('sessionId', sessionId, { maxAge: 7 * 24 * 60 * 60 * 1000 });
+  res.cookie('sessionId', sessionId, { maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: 'lax' });
   res.json({ success: true, username });
 });
 
@@ -111,10 +122,10 @@ app.post("/api/login", (req, res) => {
     return res.status(401).json({ error: 'Invalid username or password' });
   }
   
-  const sessionId = generateSessionId();
-  sessions.set(sessionId, { username: user.username, userId: username.toLowerCase() });
+  const sessionId = username.toLowerCase();
+  sessions.set(sessionId, { username: user.username, userId: sessionId });
   
-  res.cookie('sessionId', sessionId, { maxAge: 7 * 24 * 60 * 60 * 1000 });
+  res.cookie('sessionId', sessionId, { maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: 'lax' });
   res.json({ success: true, username: user.username });
 });
 
@@ -134,8 +145,17 @@ app.get("/api/me", requireAuth, (req, res) => {
 // ---------- Socket layer ----------
 io.on("connection", (socket) => {
   // Check authentication
-  const sessionId = socket.handshake.auth?.sessionId;
-  const session = sessions.get(sessionId);
+  const sessionId = socket.handshake.auth?.sessionId || (socket.handshake.headers.cookie || '').split('sessionId=')[1]?.split(';')[0];
+  let session = sessions.get(sessionId);
+
+  // Rebuild session from DB if missing in memory
+  if (!session && sessionId) {
+    const user = db.getUser(sessionId);
+    if (user) {
+      session = { username: user.username, userId: sessionId };
+      sessions.set(sessionId, session);
+    }
+  }
   
   if (!session) {
     socket.emit("auth:required");
