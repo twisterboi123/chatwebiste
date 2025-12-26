@@ -17,6 +17,11 @@ const els = {
   chatInput: document.getElementById("msg"),
   contextLabel: document.getElementById("context-label"),
   contextSub: document.getElementById("context-sub"),
+  partnerLeftModal: document.getElementById("partner-left-modal"),
+  autoReconnect: document.getElementById("auto-reconnect"),
+  nextBtnModal: document.getElementById("next-btn-modal"),
+  changePrefsBtnModal: document.getElementById("change-prefs-btn"),
+  homeBtnModal: document.getElementById("home-btn-modal"),
 };
 
 let username = loadUsername();
@@ -86,7 +91,20 @@ socket.on("random:message", (msg) => renderMessage(msg, "Random Chat"));
 socket.on("random:ended", () => {
   currentPartner = null;
   setStatus("queue");
-  setContext("Random Chat", "Re-queued");
+  setContext("Random Chat", "Partner left");
+  clearMessages();
+  
+  // Show modal for partner left
+  closePartnerLeftModal = false;
+  els.partnerLeftModal.style.display = "flex";
+  
+  // Auto-reconnect if checkbox was previously checked
+  setTimeout(() => {
+    if (els.autoReconnect.checked) {
+      handleNextRandom();
+      els.partnerLeftModal.style.display = "none";
+    }
+  }, 500);
 });
 
 // Generic status updates
@@ -290,4 +308,27 @@ function loadUsername() {
 function notify(msg) {
   renderMessage({ type: "system", text: msg }, "System");
 }
+
+// Modal handlers for partner left
+function handleNextRandom() {
+  socket.emit("random:next");
+  setContext("Random Chat", "Finding a new partner...");
+  setStatus("queue");
+  clearMessages();
+  els.partnerLeftModal.style.display = "none";
+}
+
+function handleChangePrefs() {
+  els.partnerLeftModal.style.display = "none";
+  // Show preferences section or scroll to it
+  document.getElementById("interest-input").focus();
+}
+
+function handleGoHome() {
+  window.location.href = 'home.html';
+}
+
+els.nextBtnModal.addEventListener("click", handleNextRandom);
+els.changePrefsBtnModal.addEventListener("click", handleChangePrefs);
+els.homeBtnModal.addEventListener("click", handleGoHome);
 

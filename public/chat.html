@@ -85,5 +85,27 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="chat.js"></script>
+
+  <!-- Partner Left Modal -->
+  <div id="partner-left-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Oops! The person left</h3>
+      </div>
+      <div class="modal-body">
+        <p>Your chat partner disconnected. What would you like to do?</p>
+        
+        <div style="margin-top: 16px; padding: 12px; background: var(--bg); border-radius: var(--radius); display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="auto-reconnect" />
+          <label for="auto-reconnect" style="margin: 0; display: inline;">Auto-reconnect to next person</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="next-btn-modal" class="btn primary">Next Person</button>
+        <button id="change-prefs-btn" class="btn ghost">Change Preferences</button>
+        <button id="home-btn-modal" class="btn ghost">Go Home</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
