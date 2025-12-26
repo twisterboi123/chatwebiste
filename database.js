@@ -1,62 +1,59 @@
-const fs = require('fs').promises;
-const path = require('path');
+const { Pool } = require('pg');
 
-const DB_FILE = path.join(__dirname, 'database.json');
+const connectionString = process.env.DATABASE_URL;
 
-// Initialize database structure
-let db = {
-  users: {},
-  version: 1
-};
+if (!connectionString) {
+  console.warn('DATABASE_URL is not set. Please configure Render Postgres.');
+}
 
-// Load database from file
+const pool = new Pool({
+  connectionString,
+  ssl: connectionString ? { rejectUnauthorized: false } : false,
+});
+
 async function load() {
-  try {
-    const data = await fs.readFile(DB_FILE, 'utf8');
-    db = JSON.parse(data);
-    console.log(`Database loaded: ${Object.keys(db.users).length} users`);
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      // File doesn't exist, create it
-      await save();
-      console.log('Database created');
-    } else {
-      console.error('Error loading database:', error);
-    }
-  }
+  if (!connectionString) return;
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      username TEXT PRIMARY KEY,
+      password TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+  const { rows } = await pool.query('SELECT COUNT(*) FROM users');
+  console.log(`Database loaded: ${rows[0].count} users`);
 }
 
-// Save database to file
 async function save() {
-  try {
-    await fs.writeFile(DB_FILE, JSON.stringify(db, null, 2), 'utf8');
-  } catch (error) {
-    console.error('Error saving database:', error);
-  }
+  // no-op for postgres; kept for API compatibility
 }
 
-// User operations
-function getUser(username) {
-  return db.users[username.toLowerCase()];
+async function getUser(username) {
+  if (!connectionString) return null;
+  const { rows } = await pool.query('SELECT username, password FROM users WHERE username = $1', [username.toLowerCase()]);
+  return rows[0] || null;
 }
 
-function createUser(username, password) {
+async function createUser(username, password) {
+  if (!connectionString) throw new Error('DATABASE_URL not configured');
   const userId = username.toLowerCase();
-  db.users[userId] = {
-    username,
-    password,
-    createdAt: Date.now()
-  };
-  save(); // Save asynchronously
-  return db.users[userId];
+  await pool.query(
+    'INSERT INTO users (username, password) VALUES ($1, $2) ON CONFLICT (username) DO NOTHING',
+    [userId, password]
+  );
+  return { username, password };
 }
 
-function userExists(username) {
-  return db.users.hasOwnProperty(username.toLowerCase());
+async function userExists(username) {
+  if (!connectionString) return false;
+  const { rows } = await pool.query('SELECT 1 FROM users WHERE username = $1', [username.toLowerCase()]);
+  return rows.length > 0;
 }
 
-function getAllUsers() {
-  return Object.values(db.users);
+async function getAllUsers() {
+  if (!connectionString) return [];
+  const { rows } = await pool.query('SELECT username, created_at FROM users');
+  return rows;
 }
 
 module.exports = {
@@ -65,5 +62,5 @@ module.exports = {
   getUser,
   createUser,
   userExists,
-  getAllUsers
+  getAllUsers,
 };

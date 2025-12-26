@@ -24,13 +24,13 @@ function generateSessionId() {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
 
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
   const sessionId = req.cookies.sessionId;
   let session = sessions.get(sessionId);
 
   // Rebuild session from DB if memory was cleared (e.g., Render restart)
   if (!session && sessionId) {
-    const user = db.getUser(sessionId);
+    const user = await db.getUser(sessionId);
     if (user) {
       session = { username: user.username, userId: sessionId };
       sessions.set(sessionId, session);
@@ -80,7 +80,7 @@ app.get("/api/stats", (req, res) => {
   });
 });
 
-app.post("/api/register", (req, res) => {
+app.post("/api/register", async (req, res) => {
   const { username, password } = req.body;
   
   if (!username || !password) {
@@ -95,11 +95,11 @@ app.post("/api/register", (req, res) => {
     return res.status(400).json({ error: 'Password must be at least 6 characters' });
   }
   
-  if (db.userExists(username)) {
+  if (await db.userExists(username)) {
     return res.status(400).json({ error: 'Username already taken' });
   }
   
-  db.createUser(username, password);
+  await db.createUser(username, password);
   
   // Use stable sessionId = username to survive restarts (db-backed)
   const sessionId = username.toLowerCase();
@@ -109,14 +109,14 @@ app.post("/api/register", (req, res) => {
   res.json({ success: true, username });
 });
 
-app.post("/api/login", (req, res) => {
+app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
   
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password required' });
   }
   
-  const user = db.getUser(username);
+  const user = await db.getUser(username);
   
   if (!user || user.password !== password) {
     return res.status(401).json({ error: 'Invalid username or password' });
@@ -143,14 +143,14 @@ app.get("/api/me", requireAuth, (req, res) => {
 });
 
 // ---------- Socket layer ----------
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   // Check authentication
   const sessionId = socket.handshake.auth?.sessionId || (socket.handshake.headers.cookie || '').split('sessionId=')[1]?.split(';')[0];
   let session = sessions.get(sessionId);
 
   // Rebuild session from DB if missing in memory
   if (!session && sessionId) {
-    const user = db.getUser(sessionId);
+    const user = await db.getUser(sessionId);
     if (user) {
       session = { username: user.username, userId: sessionId };
       sessions.set(sessionId, session);
