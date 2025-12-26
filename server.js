@@ -4,6 +4,7 @@ const http = require("http");
 const path = require("path");
 const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
+const db = require("./database");
 
 const app = express();
 const server = http.createServer(app);
@@ -34,7 +35,6 @@ function requireAuth(req, res, next) {
 }
 
 // In-memory state (no database yet)
-const users = new Map(); // username -> { username, password, createdAt }
 const rooms = new Map(); // roomId -> room
 const clients = new Map(); // socketId -> user state
 const randomQueue = []; // socketIds
@@ -85,15 +85,11 @@ app.post("/api/register", (req, res) => {
     return res.status(400).json({ error: 'Password must be at least 6 characters' });
   }
   
-  if (users.has(username.toLowerCase())) {
+  if (db.userExists(username)) {
     return res.status(400).json({ error: 'Username already taken' });
   }
   
-  users.set(username.toLowerCase(), {
-    username,
-    password, // In production, this should be hashed
-    createdAt: Date.now()
-  });
+  db.createUser(username, password);
   
   const sessionId = generateSessionId();
   sessions.set(sessionId, { username, userId: username.toLowerCase() });
@@ -109,7 +105,7 @@ app.post("/api/login", (req, res) => {
     return res.status(400).json({ error: 'Username and password required' });
   }
   
-  const user = users.get(username.toLowerCase());
+  const user = db.getUser(username);
   
   if (!user || user.password !== password) {
     return res.status(401).json({ error: 'Invalid username or password' });
@@ -626,6 +622,7 @@ setInterval(() => {
 }, 1500);
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
+  await db.load();
   console.log(`Server running on http://localhost:${PORT}`);
 });
